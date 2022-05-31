@@ -146,6 +146,43 @@ bool CommandExecutor::doCommandSingleton(Command* cmd)
   return status;
 }
 
+bool CommandExecutor::doCheckSatCommandSingleton(Command* cmd)
+{
+  bool status = true;
+  if(d_options[options::verbosity] >= -1) {
+    status = smtEngineInvoke(d_smtEngine, cmd, d_options[options::out]);
+  } else {
+    status = smtEngineInvoke(d_smtEngine, cmd, NULL);
+  }
+
+  Result res;
+  CheckSatCommand* cs = dynamic_cast<CheckSatCommand*>(cmd);
+  if(cs != NULL) {
+    d_result = res = cs->getResult();
+  }
+
+  // dump the model/proof if option is set
+  if(status) {
+    Command * g = NULL;
+    if( d_options[options::produceModels] &&
+        d_options[options::dumpModels] &&
+        ( res.asSatisfiabilityResult() == Result::SAT ||
+          (res.isUnknown() && res.whyUnknown() == Result::INCOMPLETE) ) ) {
+      g = new GetModelCommand();
+    }
+
+    if( g ){
+      //set no time limit during dumping if applicable
+      if( d_options[options::forceNoLimitCpuWhileDump] ){
+        setNoLimitCPU();
+      }
+
+      status = doCheckSatCommandSingleton(g);
+    }
+  }
+  return status;
+}
+
 bool smtEngineInvoke(SmtEngine* smt, Command* cmd, std::ostream *out)
 {
   if(out == NULL) {

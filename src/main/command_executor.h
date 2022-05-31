@@ -65,12 +65,20 @@ public:
     d_stats.flushInformation(out);
   }
 
+  /* rakesh - 2015-07-12 - Added getter for d_smtEngine */
+  SmtEngine* getSmtEngine() {
+      return d_smtEngine;
+  }
+
 protected:
   /** Executes treating cmd as a singleton */
   virtual bool doCommandSingleton(CVC4::Command* cmd);
 
 private:
   CommandExecutor();
+
+public:
+  bool doCheckSatCommandSingleton(Command* cmd); // rakesh - 2015-07-13
 
 };/* class CommandExecutor */
 

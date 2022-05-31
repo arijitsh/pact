@@ -418,6 +418,13 @@ int runCvc4(int argc, char* argv[], Options& opts) {
         replayParser->useDeclarationsFrom(parser);
       }
       while((status || opts[options::continuedExecution]) && (cmd = parser->nextCommand())) {
+
+        // rakesh - 2015-07-13 - stop at 'check-sat' command and do model counting below
+        if (dynamic_cast<CheckSatCommand*>(cmd) != NULL) {
+          delete cmd;
+          break;
+        }
+
         status = pExecutor->doCommand(cmd);
         if(dynamic_cast<QuitCommand*>(cmd) != NULL) {
           delete cmd;
@@ -425,6 +432,29 @@ int runCvc4(int argc, char* argv[], Options& opts) {
         }
         delete cmd;
       }
+
+      /* rakesh - 2015-07-12 - model counting loop */
+      unsigned int maxSolutions = opts[options::maxsolutions];
+      bool newStatus = true;
+      for (int i = 0; i < maxSolutions; ++i) {
+        Command *newCmd = new CheckSatCommand();
+        newCmd->invoke(pExecutor->getSmtEngine(), std::cout);
+        newStatus = !newCmd->fail();
+        Result newResult = dynamic_cast<CheckSatCommand*>(newCmd)->getResult();
+        delete newCmd;
+
+        if (!newResult.isSat() || newResult.isUnknown())
+          break;
+
+        GetModelCommand *getModelCmd = new GetModelCommand();
+        Expr constraint = getModelCmd->getModelCommandInvoke(pExecutor->getSmtEngine(), std::cout);
+        delete getModelCmd;
+
+        newCmd = new AssertCommand(constraint);
+        newStatus = pExecutor->doCommand(newCmd);
+        delete newCmd;
+      }
+
       // Remove the parser
       delete parser;
     }

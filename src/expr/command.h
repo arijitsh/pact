@@ -564,6 +564,8 @@ public:
   Command* exportTo(ExprManager* exprManager, ExprManagerMapCollection& variableMap);
   Command* clone() const;
   std::string getCommandName() const throw();
+
+  Expr getModelCommandInvoke(SmtEngine* smtEngine, std::ostream& out) throw(); // rakesh - 2015-07-13
 };/* class GetModelCommand */
 
 class CVC4_PUBLIC GetProofCommand : public Command {

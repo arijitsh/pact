@@ -191,8 +191,8 @@ void TheoryBV::mkAckermanizationAsssertions(std::vector<Node>& assertions) {
   Debug("bv-ackermanize") << "TheoryBV::mkAckermanizationAsssertions\n";
   
   Assert(options::bitblastMode() == theory::bv::BITBLAST_MODE_EAGER);
-  AlwaysAssert(!options::incrementalSolving());
-  TNodeSet seen; 
+  // AlwaysAssert(!options::incrementalSolving());
+  TNodeSet seen;
   for (unsigned i = 0; i < assertions.size(); ++i) {
     collectNumerators(assertions[i], seen); 
   }

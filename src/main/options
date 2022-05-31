@@ -58,4 +58,8 @@ expert-option tearDownIncremental --tear-down-incremental bool :default false
 expert-option waitToJoin --wait-to-join bool :default true
  wait for other threads to join before quitting
 
+# rakesh - 2015-07-14 - model counting command line option
+option maxsolutions --maxsolutions=N unsigned :default 1 :predicate greater(0)
+ Maximum number of models to generate
+
 endmodule

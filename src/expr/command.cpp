@@ -995,6 +995,53 @@ void GetModelCommand::invoke(SmtEngine* smtEngine) throw() {
   }
 }
 
+/* rakesh - 2015-07-13 - Added function to return new constraint for model counting */
+Expr GetModelCommand::getModelCommandInvoke(SmtEngine* smtEngine, std::ostream& out) throw() {
+  static bool firstRun = true;
+  static vector<const DeclareFunctionCommand*> dfcList;
+
+  invoke(smtEngine);
+
+  Expr constraint = smtEngine->getExprManager()->mkConst(true);
+
+  if (firstRun) {
+    if(!(isMuted() && ok())) {
+      for(size_t i = 0; i < d_result->getNumCommands(); ++i) {
+        const Command *c = d_result->getCommand(i);
+
+        if(dynamic_cast<const DeclareFunctionCommand*>(c) != NULL) {
+          const DeclareFunctionCommand* dfc = (const DeclareFunctionCommand*)c;
+          dfcList.push_back(dfc);
+          Expr expr = dfc->getFunction();
+          Expr val = smtEngine->getValue(expr);
+
+          Expr exprEqualVal = smtEngine->getExprManager()->mkExpr(kind::EQUAL, expr, val);
+          constraint = smtEngine->getExprManager()->mkExpr(kind::AND, constraint, exprEqualVal);
+        }
+      }
+
+      constraint = smtEngine->getExprManager()->mkExpr(kind::NOT, constraint);
+    }
+
+    firstRun = false;
+    return constraint;
+  } else {
+    if(!(isMuted() && ok())) {
+      for (size_t i = 0; i < dfcList.size(); ++i) {
+        Expr expr = dfcList[i]->getFunction();
+        Expr val = smtEngine->getValue(expr);
+
+        Expr exprEqualVal = smtEngine->getExprManager()->mkExpr(kind::EQUAL, expr, val);
+        constraint = smtEngine->getExprManager()->mkExpr(kind::AND, constraint, exprEqualVal);
+      }
+
+      constraint = smtEngine->getExprManager()->mkExpr(kind::NOT, constraint);
+    }
+
+    return constraint;
+  }
+}
+
 /* Model is private to the library -- for now
 Model* GetModelCommand::getResult() const throw() {
   return d_result;
